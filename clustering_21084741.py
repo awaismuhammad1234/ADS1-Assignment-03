@@ -100,3 +100,37 @@ plt.xticks(subset_dates, rotation=45)
 plt.title("Population in urban agglomerations in United States")
 print(subset_dates)
 plt.show()
+
+# find a feasible start value the pedestrian way
+popt, pcorr = opt.curve_fit(logistics, usdf["date"], usdf["population_ammal"], p0=(16e8, 0.004, 1985.0), maxfev=8000)
+print("Fit parameter", popt)
+usdf["pop_logistics"] = logistics(usdf["date"], *popt)
+plt.figure()
+plt.title("logistics function")
+plt.plot(usdf["date"], usdf["population_ammal"], label="data")
+plt.plot(usdf["date"], usdf["pop_logistics"], label="fit")
+plt.legend()
+plt.show()
+print("Population in urban agglomerations in United States in United States")
+print("2030:", logistics(2030, *popt) / 1.0e6, "Mill.")
+print("2040:", logistics(2040, *popt) / 1.0e6, "Mill.")
+print("2050:", logistics(2050, *popt) / 1.0e6, "Mill.")
+
+# extract variances and calculate sigmas
+popt, pcorr = opt.curve_fit(poly, usdf["date"], usdf["population_ammal"])
+print("Fit parameter", popt)
+# extract variances and calculate sigmas
+sigmas = np.sqrt(np.diag(pcorr))
+# call function to calculate upper and lower limits with extrapolation
+# create extended year range
+years = np.arange(1950, 2050)
+lower, upper = err.err_ranges(years, poly, popt, sigmas)
+usdf["poly"] = poly(usdf["date"], *popt)
+plt.figure()
+plt.title("polynomial")
+plt.plot(usdf["date"], usdf["population_ammal"], label="data")
+plt.plot(usdf["date"], usdf["poly"], label="fit")
+# plot error ranges with transparency
+plt.fill_between(years, lower, upper, alpha=0.5)
+plt.legend(loc="upper left")
+plt.show()
